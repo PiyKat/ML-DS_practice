@@ -1,0 +1,169 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import cross_validation
+
+df1 = pd.read_csv("train.csv",delimiter=",")
+
+
+# Print the no of people who survived, and proportion of men and women
+
+no_of_survivors = len(df1[df1["Survived"] == 1])
+
+men_prop = len(df1[(df1["Survived"] == 1) & (df1["Sex"] == "male")])/len(df1[(df1["Sex"] == "male")])
+
+women_prop = len(df1[(df1["Survived"] == 1) & (df1["Sex"] == "female")])/len(df1[(df1["Sex"] == "female")])
+
+#print(str(men_prop) + " " + str(women_prop))
+
+
+# Creating a function to visualize data
+
+def Visualize_Data(df1,column_name):
+    print("For our purposes, we'll be analysing based on age \n")
+    data_range = df1[column_name].max()
+    bins = [0]
+    
+    i = 0
+    for i in range(0,int(data_range)+1,10):
+        count_bracket = len(df1[(df1[column_name] >= i) & (df1[column_name] < (i+10))])
+        print("Bracket " + str(i) + "-" + str(i+10) + ": " + str(count_bracket))
+        bins.append(i+10)
+        
+
+    plt.hist(df1[column_name].dropna(),bins,histtype = "bar",rwidth = 0.8)
+    plt.title("Visualising " + column_name + "as a histogram")
+    plt.show()
+
+Visualize_Data(df1,"Age")
+
+def create_gender(x):
+    if x == "male":
+        return 0
+    elif x == "female":
+        return 1
+    else:
+        return None
+
+# Create a new row based on gender for analysis (sklearn may show some problems for text)
+# Use rolling map to create a new row , also let's take care of nan values in age section
+    
+def TransformData(df1):
+
+    df1["Gender"] = list(map(create_gender,df1["Sex"]))
+    #print(df1["Gender"])
+
+    # As mentioned on the kaggle website, for filling ages, to prevent noise and outliers, we're going to use medians for each passenger class, for males and females
+    median_age = np.zeros((2,3))
+
+    for i in range(2):
+        for j in range(3):
+
+            median_age[i,j] = df1[(df1["Gender"] == i) & (df1["Pclass"] == j+1)]["Age"].dropna().median()
+
+    #print(median_age)
+
+    df1["Agefill"] = df1["Age"]
+
+    # One doubt
+
+    for i in range(2):
+        for j in range(3):
+            df1.loc[(df1["Agefill"].isnull()) & (df1["Gender"] == i ) & (df1["Pclass"] == j+1), "Agefill"] = median_age[i,j]
+
+    #print(df1[df1["Age"].isnull()][["Age","Agefill"]])
+
+    df1["AgeIsNull"] = df1["Age"].isnull().astype(int)
+    
+    #print(df1["AgeIsNull"])
+
+
+def features_create(df1):
+
+    df1["FamilySize"] = df1["SibSp"] + df1["Parch"]
+
+    df1["Age*Class"] = df1["Agefill"]*df1["Pclass"]
+
+    Visualize_Data(df1,"Age*Class")
+
+
+
+TransformData(df1)
+
+features_create(df1)
+
+
+########## Training the Random Forest Classifier ##############
+
+
+df1.drop(["Name","Sex","Ticket","Cabin","Embarked","Age"],axis = 1,inplace = True)
+
+print(df1.describe())
+
+training_data = df1.values
+
+
+y = training_data[:,1]
+
+
+X = np.delete(training_data,1,1)
+
+print(X.shape)
+
+X_train, X_test , y_train, y_test = cross_validation.train_test_split(X,y,test_size = 0.4)
+
+
+clf = RandomForestClassifier(n_jobs = 10)
+
+clf.fit(X_train,y_train)
+
+print(clf.score(X_test,y_test))
+
+
+############ Using test data to see results and write data for submission ###############
+
+
+
+df2 = pd.read_csv("test.csv",delimiter = ",")
+
+TransformData(df2)
+
+features_create(df2)
+
+df2.drop(["Name","Sex","Ticket","Cabin","Embarked","Age"],axis = 1,inplace =True)
+
+df2.fillna(method="ffill",inplace = True)
+
+X_testing_data = df2.values
+print(X_testing_data)
+
+prediction = clf.predict(X_testing_data)
+print(prediction)
+
+
+
+############## Writing the results in a new file  #################
+
+results = pd.DataFrame({"PassengerId":X_testing_data[:,0],\
+                        "Survived":prediction},dtype = int)
+print(results)
+
+results.to_csv("rf_submission.csv",headers = True,dtype = int,\
+               columns = ["PassengerId","Survived"],index = False)
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+
+                
+
