@@ -1,0 +1,143 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy
+import random
+import csv,urllib
+
+
+seeds_dataset  = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/00236/seeds_dataset.txt', engine= 'python',sep = "\s*",usecols = (0,1,2,3,4,5,6),header = None)
+
+
+seeds_dataset.columns = ['Area','Per.','Comp.','Length','Width','Assym.Coeff.','Grov_length']
+
+clustering_data = seeds_dataset[['Length','Width']]
+
+# def VisualizeData() will be completed later   
+
+def Euclidian_Distance(training_data,cluster_head1,cluster_head2,cluster_head3):
+
+    cluster_cost = []
+    new_data = np.empty([0,3])
+    
+    for i in range(len(training_data)):
+
+        ed_1 = np.dot((np.subtract(training_data[i,:],cluster_head1)),((np.subtract(training_data[i,:],cluster_head1)).T))
+        ed_2 = np.dot((np.subtract(training_data[i,:],cluster_head2)),((np.subtract(training_data[i,:],cluster_head1)).T))
+        ed_3 = np.dot((np.subtract(training_data[i,:],cluster_head3)),((np.subtract(training_data[i,:],cluster_head1)).T))
+
+        small = ed_3
+        assigned_cluster = 3
+        if (ed_1 < ed_2 and ed_1 < ed_3):
+            small = ed_1
+            assigned_cluster = 1
+        elif(ed_2 < ed_3):
+            assigned_cluster = 2
+            small = ed_2
+            
+        x = np.hstack((training_data[i,:],assigned_cluster))
+        new_data = np.vstack((new_data,x))
+        cluster_cost.append(float(small))
+        
+
+    cost = 0
+    #print(cluster_cost)
+    for a in cluster_cost:
+        cost = cost + a
+
+    return cost,new_data
+
+def centroid_shift(new_data):
+
+    first_centroid_data = new_data[(new_data[:,2] == 1)]
+    second_centroid_data = new_data[(new_data[:,2] == 2)]
+    third_centroid_data = new_data[(new_data[:,2] == 3)]
+
+    first_centroid = np.mean(first_centroid_data[:,[0,1]],axis = 0)
+    second_centroid = np.mean(second_centroid_data[:,[0,1]],axis = 0)
+    third_centroid = np.mean(third_centroid_data[:,[0,1]],axis = 0)
+
+    return first_centroid,second_centroid,third_centroid
+
+
+# Assuming 3 structures
+
+def centroid_initialization(clustering_data):
+
+     i = random.randint(0,len(clustering_data)-1)
+     clustering_data = clustering_data.drop(clustering_data.index[i])
+
+     j = random.randint(0,len(clustering_data)-1)
+     clustering_data = clustering_data.drop(clustering_data.index[j])
+
+     k = random.randint(0,len(clustering_data)-1)
+     clustering_data = clustering_data.drop(clustering_data.index[k])
+
+     return i,j,k
+
+
+def kmeans(clustering_data):
+
+    iterations = 100
+
+    cluster_dictionary = {}
+
+    training_data = clustering_data.values
+    
+    
+    for i in range(iterations):
+
+        cost_per_cluster = [0]
+        
+        c1,c2,c3 = centroid_initialization(clustering_data)
+        cluster_set = tuple((c1,c2,c3))
+        
+        print("Centroids for iteration " + str(i+1) + ": " + str(c1) + "," + str(c2) + "," + str(c3))
+        
+        c = 1
+
+        cluster_head1 = training_data[c1,:]
+        cluster_head2 = training_data[c2,:]
+        cluster_head3 = training_data[c3,:]
+
+        cost,new_data = Euclidian_Distance(training_data, cluster_head1 , cluster_head2 , cluster_head3)
+            
+        #print("Cost: " + str(cost))
+            
+        cost_per_cluster.append(cost)
+
+        while(cost_per_cluster[c] > cost_per_cluster[c-1]):
+
+            cluster_head1, cluster_head2, cluster_head3 = centroid_shift(new_data)
+            
+            cost,new_data = Euclidian_Distance(training_data, cluster_head1 , cluster_head2 , cluster_head3)
+            
+            #print("Cost: " + str(cost))
+            
+            cost_per_cluster.append(cost)
+            c = c + 1
+
+        
+        np_cost = np.array(cost_per_cluster)      
+        cluster_dictionary[str(i)]  = str(np.min(np_cost))
+
+    print(cluster_dictionary)
+
+
+kmeans(clustering_data)
+        
+        
+        
+        
+        
+        
+
+
+
+
+
+     
+                        
+    
+
+
