@@ -1,0 +1,63 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+
+seeds_dataset  = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/00236/seeds_dataset.txt', engine='python',sep = "\s*",usecols = (0,1,2,3,4,5,6),header = None)
+
+seeds_dataset.columns = ['Area','Perimeter','Compactness','Length','Width','Assymetry Coefficient','Grov_length']
+
+print(seeds_dataset.isnull().values.any())
+
+# For this problem, we have 3 clusters - Kama, Rosa and Canadian 
+# Get a better idea of how the features are distributed between features
+
+def VisualizeData(): 
+
+    x_axis_labels = { 0 : 'Area',
+                      1 : 'Perimeter',
+                      2 : 'Compactness',
+                      3 : 'Length',
+                      4 : 'Width',
+                      5 : 'Assymetry Coefficient',
+                      6 : 'Grov_length' }
+                    
+    for i in range(7):
+        
+        
+        plt.subplot(2,4,i+1)                        # Doubt
+        bins = 10
+        plt.hist(seeds_dataset[x_axis_labels[i]],bins,alpha = 0.5,rwidth = 0.8)
+        plt.xlabel(x_axis_labels[i])
+        #plt.show()
+                    
+        
+    plt.show()
+
+VisualizeData()
+
+# NOTE -  We need to implement standard scaling to implement PCA in this case
+
+def Standardization():
+    
+    update = StandardScaler()
+    pca_data = update.fit_transform(seeds_dataset)
+    return pca_data
+
+
+def PCA_implement():
+    
+    data_pac_implement = PCA(n_components = 2)
+    Y = data_pac_implement.fit_transform(Standardization())
+    plt.show()
+    
+
+PCA_implement()
+
+
+
+ 
