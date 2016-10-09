@@ -53,11 +53,14 @@ def PCA_implement():
     
     data_pac_implement = PCA(n_components = 2)
     Y = data_pac_implement.fit_transform(Standardization())
-    plt.show()
+    kmeans = KMeans(init="k-means++",n_clusters = 3,n_init=10)
+    clusters = kmeans.fit(Y)
+    print(clusters)
+    
     
 
 PCA_implement()
+    
+    
 
 
-
- 
