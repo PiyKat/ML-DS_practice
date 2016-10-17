@@ -1,0 +1,71 @@
+import bs4
+import pandas as pd
+import urllib
+import certifi
+from bs4 import BeautifulSoup
+
+wiki = "https://en.wikipedia.org/wiki/List_of_state_and_union_territory_capitals_in_India"
+
+url = urllib.request.urlopen(wiki)
+
+soup = BeautifulSoup(url)
+
+print(soup.title)      # This method works with all the tags present in the HTML page
+print(soup.title.string)   
+links = soup.find_all("a")  # To get all the links in the a tag with other info like title and other info
+
+# In order to extract only the links , we iterate over all a tags and extact href using get(inbuilt function in bs)
+for a in links:
+    print(a.get("href"))
+
+# We have to extract info about state capitals of India
+
+all_tables = soup.find("table", class_ = "wikitable sortable plainrowheaders")
+print(all_tables)
+
+A = []
+B = []
+C = []
+D = []
+E = []
+F = []
+G = []
+columns = []
+
+for table in all_tables.findAll("tr"):
+
+    define = table.findAll('td')
+    column = table.findAll('th')
+
+    if(len(define) == 0):      # in case of find all, either access individually or iterate over it
+        for names in column:
+            
+            columns.append(names.find(text = True))
+
+    if(len(define)== 6):
+        
+        A.append(define[0].find(text = True))
+        B.append(column[0].find(text = True))
+        C.append(define[1].find(text = True))
+        D.append(define[2].find(text = True))
+        E.append(define[3].find(text = True))
+        F.append(define[4].find(text = True))
+        G.append(define[5].find(text = True))
+
+df = pd.DataFrame()
+
+df= pd.DataFrame(A,columns=['Number'])
+df['State/UT']=B
+df['Admin_Capital']=C
+df['Legislative_Capital']=D
+df['Judiciary_Capital']=E
+df['Year_Capital']=F
+df['Former_Capital']=G
+
+print(df)
+
+
+
+
+
+    
