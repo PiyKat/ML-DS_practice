@@ -1,0 +1,31 @@
+PROC IMPORT OUT=MULTI_REG 
+        DATAFILE="/folders/myfolders/SAS303/HW_8/MultiRegressionBirthWeight.xlsx" 
+        DBMS="xlsx" REPLACE;
+    SHEET="Sheet1";
+    GETNAMES=YES;
+RUN;
+
+DATA Birth_Weight;
+    SET MULTI_REG;
+    
+	If _n_ = 16 then delete;
+    
+	IF Toxemia="Y" then
+        Tox=1;
+    ELSE
+        Tox=0;
+/*
+PROC REG DATA=Birth_Weight  plots(label)=(RStudentByLeverage CooksD);
+    MODEL BirthWeight=HeadCircumference Length GestationalAge MotherAge Tox/ VIF collin r 
+	selection = stepwise;
+    output cookd=cooksd;
+    RUN;
+quit;
+*/
+
+PROC REG DATA=Birth_Weight  plots(label)=(RStudentByLeverage CooksD);
+    MODEL BirthWeight=HeadCircumference Length GestationalAge MotherAge Tox/ VIF collin r 
+	selection = cp best=3;
+    output cookd=cooksd;
+    RUN;
+quit;
