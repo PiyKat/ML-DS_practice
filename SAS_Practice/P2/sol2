@@ -1,0 +1,63 @@
+PROC IMPORT OUT=Flushot
+            DATAFILE="/folders/myfolders/SAS303/HW_8/FluShot.xlsx"
+            DBMS="xlsx" REPLACE;
+        SHEET="Sheet1";
+        GETNAMES=YES;
+RUN;
+
+DATA Health;
+        SET Flushot;
+
+
+ods graphics / reset width=6.4in height=4.8in imagemap;
+proc sgplot data=WORK.HEALTH noautolegend;
+
+        scatter x=Age y=FluShot / transparency=0.00 name='Scatter';
+        xaxis grid;
+        yaxis grid; 
+run;
+ods graphics off;
+
+PROC LOGISTIC DESCENDING;
+MODEL FluShot=age/ RISKLIMITS pprob=1 outroc=ROCData ;
+OUTPUT OUT=LOG_FLU_OUT PREDICTED=Pre_FluShot;
+title "FIRST MODEL FLUSHOT=AGE";
+RUN;
+
+PROC SORT;
+BY AGE;
+Proc Gplot  data = LOG_FLU_OUT;
+Plot Pre_FluShot*age;
+Run;
+
+
+PROC LOGISTIC DESCENDING;
+MODEL FluShot=age HealthAwareness HealthIns/ RISKLIMITS lackfit pprob=1 outroc=ROCData ;
+OUTPUT OUT=fulllogfluout PREDICTED=full_flu;
+title "FIRST MODEL FLUSHOT=AGE HealthAwareness HealthIns";
+RUN;
+quit;
+
+PROC SORT;
+BY AGE;
+Proc Gplot data = fulllogfluout;
+Plot full_flu*age;
+Run;
+
+PROC G3GRID DATA=fulllogfluout  OUT=flue_3D;
+GRID age*HealthIns=FluShot/
+    AXIS1=25 TO 75 BY 1
+    AXIS2=0 TO 2 BY 0.25;
+RUN;
+
+PROC G3D DATA=flue_3D;
+PLOT age*HealthIns=FluShot/ROTATE=75 TILT=75;
+RUN;
+
+
+PROC LOGISTIC DESCENDING;
+MODEL FluShot=age HealthAwareness HealthIns/ selection=forward ;
+OUTPUT OUT=fulllogfluout PREDICTED=full_flu;
+title "FIRST MODEL FLUSHOT = AGE HealthAwareness HealthIns FORWARD";
+RUN;
+quit;   
