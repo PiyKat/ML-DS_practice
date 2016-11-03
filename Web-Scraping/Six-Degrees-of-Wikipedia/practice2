@@ -1,0 +1,35 @@
+# The aim of this program is to create a generalized code to scrape a website and it's links for title, first para and edit links
+
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+import re
+import datetime
+import random
+
+wiki = "https://en.wikipedia.org/"
+
+pages = []
+titles = []
+first_para = []
+edit_links = []
+
+def getLinks(pageLink):
+
+    pageURL = urlopen(wiki+pageLink)
+    bsObj = BeautifulSoup(pageURL)
+
+    titles.append(bsObj.find("h1").get_text())
+    first_para.append(bsObj.find(id = "mw-content-text").findAll("p")[0])
+
+    for articles in bsObj.find(id = "ca-edit"):
+        span_element = articles.find("span")
+        edit_links.append(span_element.find("a").attrs['href'])
+    
+    for links in bsObj.find("a",href = re.compile("^(/wiki/)")):
+        if "href" in links.attr:
+            if links.attrs["href"] not in links:
+                newPage = links.attrs['href']
+                pages.append(newPage)
+                getLinks(newPage)
+
+getLinks('')
