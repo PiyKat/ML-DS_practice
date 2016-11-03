@@ -1,0 +1,31 @@
+from bs4 import BeautifulSoup
+from urllib.request import urlopen
+import datetime
+import re
+import random
+
+random.seed(datetime.datetime.now())
+
+wikiPage = "https://en.wikipedia.org/"
+
+def getLinks(articleURL):
+    html = urlopen(wikiPage+articleURL)
+    bsObject = BeautifulSoup(html)
+    #for data in bsObject.findAll("div",{"id":"bodyContent"}):
+    #   feed = data.find("a",href = re.compile("^(/wiki/)((?!:).)*$"))
+
+    return bsObject.find("div", {"id":"bodyContent"}).findAll("a",href=re.compile("^(/wiki/)((?!:).)*$"))                  
+    
+articleURL = "wiki/Kevin_Bacon"
+
+links = getLinks(articleURL)
+
+while(len(links) > 0):
+    articleLink = links[random.randint(0,len(links)-1)].attrs["href"]
+    print(articleLink)
+    links = getLinks(articleLink)
+
+print("########### Combined list of articles  #############")
+
+print(links)
+
